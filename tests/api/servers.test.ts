@@ -13,7 +13,7 @@ vi.mock("../../src/db/index", () => ({
   getDb: () => testDb,
 }));
 
-vi.mock("../../src/providers/provider.resolver", () => ({
+vi.mock("../../src/providers/provider.registry", () => ({
   resolveProvider: () => ({
     getServerIp: vi.fn().mockResolvedValue("127.0.0.1"),
     getServerStatus: vi.fn().mockResolvedValue("running"),

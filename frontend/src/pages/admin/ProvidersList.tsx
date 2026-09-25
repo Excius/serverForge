@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
-import { Cloud, Plus, Search, Trash2, ShieldAlert, Cpu } from 'lucide-react';
+import { AdapterConfigModal } from '@/components/admin/AdapterConfigModal';
+import { Cloud, Plus, Search, Trash2, ShieldAlert, Cpu, Settings } from 'lucide-react';
 
 export default function ProvidersList() {
   const [providers, setProviders] = useState<any[]>([]);
@@ -18,6 +19,8 @@ export default function ProvidersList() {
   const [slug, setSlug] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [configTarget, setConfigTarget] = useState<{ id: string; name: string } | null>(null);
 
   const fetchProvidersData = async () => {
     setLoading(true);
@@ -157,7 +160,16 @@ export default function ProvidersList() {
                       Active Driver Node
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConfigTarget({ id: provider.id, name: provider.name })}
+                      className="text-zinc-400 hover:text-sky-400 hover:bg-sky-500/10"
+                      icon={<Settings className="w-4 h-4" />}
+                    >
+                      Configure
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -233,6 +245,18 @@ export default function ProvidersList() {
         </form>
       </Modal>
 
+      {/* Dynamic Adapter Configuration Modal */}
+      {configTarget && (
+        <AdapterConfigModal
+          isOpen={!!configTarget}
+          onClose={() => setConfigTarget(null)}
+          entityType="provider"
+          entityId={configTarget.id}
+          entityName={configTarget.name}
+          apiService={providersApi}
+        />
+      )}
+
       <ConfirmModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
@@ -244,3 +268,4 @@ export default function ProvidersList() {
     </div>
   );
 }
+

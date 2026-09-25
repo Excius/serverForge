@@ -7,4 +7,8 @@ export const gamesApi = {
   create: (data: any) => api.post('/games', data),
   update: (id: string, data: any) => api.patch(`/games/${id}`, data),
   delete: (id: string) => api.delete(`/games/${id}`),
+  getConfig: (id: string) => api.get(`/games/${id}/config`),
+  saveConfig: (id: string, values: Record<string, any>) =>
+    api.put(`/games/${id}/config`, { values }),
+  deleteConfig: (id: string) => api.delete(`/games/${id}/config`),
 };
