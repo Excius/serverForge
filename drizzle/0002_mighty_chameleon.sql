@@ -1,0 +1,2 @@
+ALTER TABLE "servers" ADD COLUMN "createdBy" uuid NOT NULL;--> statement-breakpoint
+ALTER TABLE "servers" ADD CONSTRAINT "servers_createdBy_users_id_fk" FOREIGN KEY ("createdBy") REFERENCES "public"."users"("id") ON DELETE no action ON UPDATE no action;

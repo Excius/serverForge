@@ -1,0 +1,9 @@
+onlyBuiltDependencies:
+  - esbuild
+  - workerd
+allowBuilds:
+  argon2: true
+  esbuild: true
+  workerd: true
+minimumReleaseAgeExclude:
+  - hono@4.13.9

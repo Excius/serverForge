@@ -1,0 +1,26 @@
+{
+  "name": "server_forge",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "drizzle-kit migrate",
+    "db:studio": "drizzle-kit studio"
+  },
+  "dependencies": {
+    "@aws-sdk/client-ec2": "^3.1139.0",
+    "@neondatabase/serverless": "^1.1.0",
+    "argon2-wasm-edge": "^1.0.23",
+    "drizzle-orm": "^0.45.3",
+    "hono": "^4.13.9",
+    "zod": "^4.6.5"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^5.20260923.1",
+    "dotenv": "^18.0.3",
+    "drizzle-kit": "^0.31.11",
+    "wrangler": "^4.110.0"
+  }
+}
