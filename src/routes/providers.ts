@@ -8,8 +8,13 @@ import {
 import { ProviderService } from "../services/provider.service";
 import { authMiddleware } from "../middleware/auth";
 import { adminMiddleware } from "../middleware/admin";
+import { getSupportedProviders, isProviderSupported } from "../providers/provider.resolver";
 
 const providers = new Hono<AppEnv>();
+
+providers.get("/supported", authMiddleware, async (c) => {
+  return c.json({ items: getSupportedProviders() }, 200);
+});
 
 providers.get("/", authMiddleware, async (c) => {
   const db = c.get("db");
@@ -63,6 +68,16 @@ providers.post("/", authMiddleware, adminMiddleware, async (c) => {
       {
         error: "Invalid request",
         details: result.error.flatten(),
+      },
+      400,
+    );
+  }
+
+  if (!isProviderSupported(result.data.slug)) {
+    const supportedSlugs = getSupportedProviders().map((p) => p.slug).join(", ");
+    return c.json(
+      {
+        error: `Unsupported provider slug '${result.data.slug}'. Backend currently supports: [${supportedSlugs}]`,
       },
       400,
     );

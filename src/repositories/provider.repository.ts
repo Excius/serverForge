@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 
 import type { Database } from "../db";
 import { providerTable } from "../db/schema";
@@ -7,17 +7,14 @@ export class ProviderRepository {
   constructor(private readonly db: Database) {}
 
   async findAll() {
-    return this.db
-      .select()
-      .from(providerTable)
-      .where(isNull(providerTable.deletedAt));
+    return this.db.select().from(providerTable);
   }
 
   async findById(id: string) {
     const result = await this.db
       .select()
       .from(providerTable)
-      .where(and(eq(providerTable.id, id), isNull(providerTable.deletedAt)))
+      .where(eq(providerTable.id, id))
       .limit(1);
 
     return result[0] ?? null;
@@ -27,7 +24,7 @@ export class ProviderRepository {
     const result = await this.db
       .select()
       .from(providerTable)
-      .where(and(eq(providerTable.slug, slug), isNull(providerTable.deletedAt)))
+      .where(eq(providerTable.slug, slug))
       .limit(1);
 
     return result[0] ?? null;
@@ -64,13 +61,9 @@ export class ProviderRepository {
     return result[0] ?? null;
   }
 
-  async softDelete(id: string) {
+  async delete(id: string) {
     const result = await this.db
-      .update(providerTable)
-      .set({
-        deletedAt: new Date(),
-        updatedAt: new Date(),
-      })
+      .delete(providerTable)
       .where(eq(providerTable.id, id))
       .returning();
 

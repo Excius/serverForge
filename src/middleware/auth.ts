@@ -26,7 +26,7 @@ export async function authMiddleware(c: Context<AppEnv>, next: Next) {
   const session = await sessionRepository.findByTokenHash(tokenHash);
 
   if (!session) {
-    c.json(
+    return c.json(
       {
         error: "Session has been revoked",
       },
@@ -47,7 +47,7 @@ export async function authMiddleware(c: Context<AppEnv>, next: Next) {
 
   const user = await userRepository.findById(session.userId);
 
-  if (!user || user.deletedAt) {
+  if (!user) {
     return c.json(
       {
         error: "User not found",

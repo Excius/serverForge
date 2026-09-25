@@ -62,7 +62,7 @@ describe("Games Routes", () => {
         headers: { Cookie: userCookie },
       });
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(Array.isArray(body)).toBe(true);
       expect(body.length).toBe(1);
     });
@@ -81,7 +81,7 @@ describe("Games Routes", () => {
         body: JSON.stringify({ name: "Palworld", slug: "palworld" }),
       });
       expect(res.status).toBe(201);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(body.name).toBe("Palworld");
     });
 
@@ -110,7 +110,7 @@ describe("Games Routes", () => {
         headers: { Cookie: userCookie },
       });
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(body.id).toBe(gameId);
     });
     
@@ -137,7 +137,7 @@ describe("Games Routes", () => {
         body: JSON.stringify({ name: "Minecraft 2" }),
       });
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(body.name).toBe("Minecraft 2");
     });
 

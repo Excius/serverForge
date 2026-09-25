@@ -318,7 +318,7 @@ servers.get("/:id/ip", authMiddleware, async (c) => {
     }
   }
 
-  const service = new ServerService(db, c.env);
+  const service = new ServerService(db, env);
 
   const result = await service.getServerIp(idResult.data);
 

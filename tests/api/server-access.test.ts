@@ -74,7 +74,7 @@ describe("Server Access Routes", () => {
         headers: { Cookie: adminCookie },
       });
       expect(res.status).toBe(201);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.message).toBe("Access granted");
     });
 
@@ -98,7 +98,7 @@ describe("Server Access Routes", () => {
         headers: { Cookie: adminCookie },
       });
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(data.message).toBe("Access revoked");
     });
 
@@ -121,7 +121,7 @@ describe("Server Access Routes", () => {
         headers: { Cookie: adminCookie },
       });
       expect(res.status).toBe(200);
-      const data = await res.json();
+      const data = (await res.json()) as any;
       expect(Array.isArray(data)).toBe(true);
       expect(data.length).toBe(1);
       expect(data[0].id).toBe(userId);

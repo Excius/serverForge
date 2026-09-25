@@ -23,7 +23,6 @@ vi.mock("../../src/lib/session", () => ({
   hashSessionToken: vi.fn().mockImplementation(async (token) => `hash-${token}`)
 }));
 
-import { testDb } from "./db";
 vi.mock("../../src/db/index", () => ({
   getDb: () => testDb
 }));

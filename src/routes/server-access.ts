@@ -8,8 +8,8 @@ import { z } from "zod";
 const serverAccess = new Hono<AppEnv>();
 
 const paramsSchema = z.object({
-  serverId: z.uuid(),
-  userId: z.uuid(),
+  serverId: z.string().uuid(),
+  userId: z.string().uuid(),
 });
 const serverIdSchema = z.string().uuid();
 

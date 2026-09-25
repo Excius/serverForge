@@ -25,6 +25,33 @@ export class UserRepository {
     return result[0] ?? null;
   }
 
+  async listAll() {
+    const result = await this.db
+      .select({
+        id: userTable.id,
+        email: userTable.email,
+        role: userTable.role,
+        createdAt: userTable.createdAt,
+      })
+      .from(userTable);
+
+    return result;
+  }
+
+  async updateRole(id: string, role: "admin" | "user") {
+    const result = await this.db
+      .update(userTable)
+      .set({ role })
+      .where(eq(userTable.id, id))
+      .returning({
+        id: userTable.id,
+        email: userTable.email,
+        role: userTable.role,
+      });
+
+    return result[0] ?? null;
+  }
+
   async create(email: string, pass: string) {
     const result = await this.db
       .insert(userTable)

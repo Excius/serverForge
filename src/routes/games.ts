@@ -9,12 +9,17 @@ import {
 } from "../schemas/game.schema";
 import { adminMiddleware } from "../middleware/admin";
 import { authMiddleware } from "../middleware/auth";
+import { getSupportedGames, isGameSupported } from "../games/game.resolver";
 
 const games = new Hono<AppEnv>();
 
-const uuidSchema = z.uuid();
+const uuidSchema = z.string().uuid();
 
 games.use(authMiddleware);
+
+games.get("/supported", async (c) => {
+  return c.json({ items: getSupportedGames() }, 200);
+});
 
 games.get("/", async (c) => {
   const db = c.get("db");
@@ -36,6 +41,16 @@ games.post("/", adminMiddleware, async (c) => {
       {
         error: "Invalid request",
         details: result.error.flatten(),
+      },
+      400,
+    );
+  }
+
+  if (!isGameSupported(result.data.slug)) {
+    const supportedSlugs = getSupportedGames().map((g) => g.slug).join(", ");
+    return c.json(
+      {
+        error: `Unsupported game engine slug '${result.data.slug}'. Backend currently supports: [${supportedSlugs}]`,
       },
       400,
     );
