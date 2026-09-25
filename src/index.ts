@@ -11,7 +11,7 @@ import { getDb } from "./db";
 import { ServerReconciliationService } from "./services/server-reconciliation.service";
 
 // Inject schemas into Hono's core Typings
-const app = new Hono<AppEnv>({
+export const app = new Hono<AppEnv>({
   router: new RegExpRouter(),
 });
 

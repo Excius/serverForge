@@ -3,7 +3,10 @@ onlyBuiltDependencies:
   - workerd
 allowBuilds:
   argon2: true
+  cpu-features: true
   esbuild: true
+  protobufjs: true
+  ssh2: true
   workerd: true
 minimumReleaseAgeExclude:
   - hono@4.13.9
