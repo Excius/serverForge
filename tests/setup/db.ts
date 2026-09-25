@@ -33,7 +33,8 @@ vi.mock("../../src/lib/config", () => ({
     SESSION_DURATION: 3600,
     AWS_REGION: "us-east-1",
     AWS_ACCESS_KEY_ID: "mock",
-    AWS_SECRET_ACCESS_KEY: "mock"
+    AWS_SECRET_ACCESS_KEY: "mock",
+    CONFIG_ENCRYPTION_KEY: "test-secret-key-32-chars-long-123",
   }
 }));
 
@@ -60,7 +61,16 @@ afterAll(async () => {
 // Helper to wipe tables between tests
 export async function clearDatabase() {
   if (!pgClient) return;
-  const tables = ["users", "providers", "games", "servers", "server_access", "sessions"];
+  const tables = [
+    "users",
+    "providers",
+    "games",
+    "servers",
+    "server_access",
+    "sessions",
+    "game_configurations",
+    "provider_configurations",
+  ];
   for (const table of tables) {
     try {
       await pgClient.query(`TRUNCATE TABLE ${table} CASCADE;`);

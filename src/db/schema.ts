@@ -95,3 +95,25 @@ export const sessionTable = pgTable("sessions", {
   createdAt: timestamp().notNull().defaultNow(),
   revokedAt: timestamp(),
 });
+
+export const gameConfigurationTable = pgTable("game_configurations", {
+  id: uuid().primaryKey().defaultRandom(),
+  gameId: uuid()
+    .notNull()
+    .unique()
+    .references(() => gameTable.id, { onDelete: "cascade" }),
+  encryptedConfig: text().notNull(),
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().defaultNow(),
+});
+
+export const providerConfigurationTable = pgTable("provider_configurations", {
+  id: uuid().primaryKey().defaultRandom(),
+  providerId: uuid()
+    .notNull()
+    .unique()
+    .references(() => providerTable.id, { onDelete: "cascade" }),
+  encryptedConfig: text().notNull(),
+  createdAt: timestamp().defaultNow().notNull(),
+  updatedAt: timestamp().defaultNow(),
+});

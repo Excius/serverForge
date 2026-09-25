@@ -3,7 +3,7 @@ import { ServerService } from '../../../src/services/server.service';
 import { ServerRepository } from '../../../src/repositories/server.repository';
 import { GameRepository } from '../../../src/repositories/game.repository';
 import { ProviderRepository } from '../../../src/repositories/provider.repository';
-import { resolveProvider } from '../../../src/providers/provider.resolver';
+import { resolveProvider } from '../../../src/providers/provider.registry';
 import { AppError } from '../../../src/lib/errors';
 import { Database } from '../../../src/db';
 import { Bindings } from '../../../src/lib/config';
@@ -11,7 +11,7 @@ import { Bindings } from '../../../src/lib/config';
 vi.mock('../../../src/repositories/server.repository');
 vi.mock('../../../src/repositories/game.repository');
 vi.mock('../../../src/repositories/provider.repository');
-vi.mock('../../../src/providers/provider.resolver');
+vi.mock('../../../src/providers/provider.registry');
 
 describe('ServerService', () => {
   let serverService: ServerService;

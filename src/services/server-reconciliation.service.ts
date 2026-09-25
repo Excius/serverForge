@@ -1,10 +1,11 @@
 import type { Database } from "../db";
 import type { Bindings } from "../lib/config";
-import { resolveProvider } from "../providers/provider.resolver";
-import { resolveGame } from "../games/game.resolver";
+import { resolveProvider } from "../providers/provider.registry";
+import { GameRegistry, resolveGameAdapter } from "../games/game.registry";
 import { ServerRepository } from "../repositories/server.repository";
 import { ProviderRepository } from "../repositories/provider.repository";
 import { GameRepository } from "../repositories/game.repository";
+import { ConfigurationService } from "./configuration.service";
 
 const IDLE_TIMEOUT_MS = 10 * 60 * 1000;
 
@@ -12,14 +13,20 @@ export class ServerReconciliationService {
   private readonly serverRepository: ServerRepository;
   private readonly providerRepository: ProviderRepository;
   private readonly gameRepository: GameRepository;
+  private readonly gameRegistry?: GameRegistry;
+  private readonly configService: ConfigurationService;
 
   constructor(
     private readonly db: Database,
     private readonly env: Bindings,
+    gameRegistry?: GameRegistry,
+    configService?: ConfigurationService,
   ) {
     this.serverRepository = new ServerRepository(db);
     this.providerRepository = new ProviderRepository(db);
     this.gameRepository = new GameRepository(db);
+    this.gameRegistry = gameRegistry;
+    this.configService = configService ?? new ConfigurationService(db, env?.CONFIG_ENCRYPTION_KEY);
   }
 
   async reconcile() {
@@ -53,7 +60,11 @@ export class ServerReconciliationService {
       return;
     }
 
-    const computeProvider = resolveProvider(provider.slug, this.env);
+    const computeProvider = await resolveProvider(
+      provider.slug,
+      this.configService,
+      provider.id,
+    );
 
     const providerStatus = await computeProvider.getServerStatus(
       server.providerServerId,
@@ -70,6 +81,9 @@ export class ServerReconciliationService {
     }
 
     if (providerStatus === "error") {
+      console.error(
+        `[ServerReconciliation] Provider '${provider.slug}' returned error status for server ${server.id} (providerServerId: ${server.providerServerId})`,
+      );
       await this.serverRepository.update(server.id, {
         status: "error",
       });
@@ -95,7 +109,9 @@ export class ServerReconciliationService {
       return;
     }
 
-    const gameAdapter = resolveGame(game.slug);
+    const gameAdapter = this.gameRegistry?.hasAdapter(game.slug)
+      ? this.gameRegistry.getAdapter(game.slug)
+      : await resolveGameAdapter(game.slug, game.id, this.configService);
 
     let serverInfo;
 

@@ -3,14 +3,17 @@ import { AppError } from "../lib/errors";
 import { ServerRepository } from "../repositories/server.repository";
 import { GameRepository } from "../repositories/game.repository";
 import { ProviderRepository } from "../repositories/provider.repository";
-import { resolveProvider } from "../providers/provider.resolver";
+import { resolveProvider } from "../providers/provider.registry";
+import type { ProviderServerStatus } from "../providers/provider";
 import { Bindings } from "../lib/config";
 import { ServerAccessService } from "./server-access.service";
+import { ConfigurationService } from "./configuration.service";
 
 export class ServerService {
   private readonly serverRepository: ServerRepository;
   private readonly gameRepository: GameRepository;
   private readonly providerRepository: ProviderRepository;
+  private readonly configService: ConfigurationService;
   private readonly db: Database;
   private readonly env: Bindings;
 
@@ -18,6 +21,7 @@ export class ServerService {
     this.serverRepository = new ServerRepository(db);
     this.gameRepository = new GameRepository(db);
     this.providerRepository = new ProviderRepository(db);
+    this.configService = new ConfigurationService(db, env?.CONFIG_ENCRYPTION_KEY);
     this.db = db;
     this.env = env;
   }
@@ -103,100 +107,86 @@ export class ServerService {
   }
 
   async startServer(id: string) {
-    const server = await this.serverRepository.findById(id);
+    const ctx = await this.resolveServerContext(id);
+    if (!ctx) return null;
 
-    if (!server) {
-      return null;
-    }
+    await ctx.computeProvider.startServer(ctx.server.providerServerId);
 
-    const provider = await this.providerRepository.findById(server.providerId);
-
-    if (!provider) {
-      throw new AppError("Provider not found", 404);
-    }
-
-    const computeProvider = resolveProvider(provider.slug, this.env);
-
-    await computeProvider.startServer(server.providerServerId);
-
-    return this.serverRepository.update(server.id, {
+    return this.serverRepository.update(ctx.server.id, {
       status: "starting",
     });
   }
 
   async stopServer(id: string) {
-    const server = await this.serverRepository.findById(id);
+    const ctx = await this.resolveServerContext(id);
+    if (!ctx) return null;
 
-    if (!server) {
-      return null;
-    }
+    await ctx.computeProvider.stopServer(ctx.server.providerServerId);
 
-    const provider = await this.providerRepository.findById(server.providerId);
-
-    if (!provider) {
-      throw new AppError("Provider not found", 404);
-    }
-
-    const computeProvider = resolveProvider(provider.slug, this.env);
-
-    await computeProvider.stopServer(server.providerServerId);
-
-    return this.serverRepository.update(server.id, {
+    return this.serverRepository.update(ctx.server.id, {
       status: "stopping",
     });
   }
 
   async getServerStatus(id: string) {
-    const server = await this.serverRepository.findById(id);
+    const ctx = await this.resolveServerContext(id);
+    if (!ctx) return null;
 
-    if (!server) {
-      return null;
+    let status: ProviderServerStatus = "error";
+
+    try {
+      status = await ctx.computeProvider.getServerStatus(
+        ctx.server.providerServerId,
+      );
+    } catch (error: any) {
+      console.error(
+        `[ServerService] Exception querying status for server ${id} (providerServerId: ${ctx.server.providerServerId}):`,
+        error?.message || error,
+      );
+      status = "error";
     }
 
-    const provider = await this.providerRepository.findById(server.providerId);
-
-    if (!provider) {
-      throw new AppError("Provider not found", 404);
-    }
-
-    const computeProvider = resolveProvider(provider.slug, this.env);
-
-    const status = await computeProvider.getServerStatus(
-      server.providerServerId,
-    );
-
-    if (status !== server.status) {
-      await this.serverRepository.update(server.id, {
+    if (status !== ctx.server.status) {
+      await this.serverRepository.update(ctx.server.id, {
         status,
       });
     }
 
     return {
-      ...server,
+      ...ctx.server,
       status,
     };
   }
 
   async getServerIp(id: string) {
-    const server = await this.serverRepository.findById(id);
+    const ctx = await this.resolveServerContext(id);
+    if (!ctx) return null;
 
+    const ip = await ctx.computeProvider.getServerIp(ctx.server.providerServerId);
+
+    return {
+      server: ctx.server,
+      ip,
+    };
+  }
+
+  private async resolveServerContext(id: string) {
+    const server = await this.serverRepository.findById(id);
     if (!server) {
       return null;
     }
 
     const provider = await this.providerRepository.findById(server.providerId);
-
     if (!provider) {
       throw new AppError("Provider not found", 404);
     }
 
-    const computeProvider = resolveProvider(provider.slug, this.env);
+    const computeProvider = await resolveProvider(
+      provider.slug,
+      this.configService,
+      provider.id,
+    );
 
-    const ip = await computeProvider.getServerIp(server.providerServerId);
-
-    return {
-      server,
-      ip,
-    };
+    return { server, provider, computeProvider };
   }
 }

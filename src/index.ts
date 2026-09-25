@@ -16,7 +16,11 @@ export const app = new Hono<AppEnv>();
 app.use(
   "/*",
   cors({
-    origin: ["http://localhost:5173"],
+    origin: [
+      "http://localhost:5173",
+      "https://game.excius.tech",
+      "https://game-pre.excius.tech",
+    ],
     credentials: true,
   }),
 );
