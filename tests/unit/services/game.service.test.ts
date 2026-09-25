@@ -1,10 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GameService } from '../../../src/services/game.service';
 import { GameRepository } from '../../../src/repositories/game.repository';
+import { ServerRepository } from '../../../src/repositories/server.repository';
 import { AppError } from '../../../src/lib/errors';
 import { Database } from '../../../src/db';
 
 vi.mock('../../../src/repositories/game.repository');
+vi.mock('../../../src/repositories/server.repository');
 
 describe('GameService', () => {
   let gameService: GameService;
@@ -69,13 +71,22 @@ describe('GameService', () => {
   });
 
   describe('deleteGame', () => {
-    it('should delete game', async () => {
-      const mockGame = { id: '1', name: 'Game1', slug: 'game1', createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+    it('should delete game if no active servers exist', async () => {
+      const mockGame = { id: '1', name: 'Game1', slug: 'game1', createdAt: new Date(), updatedAt: new Date() };
       vi.mocked(GameRepository.prototype.findById).mockResolvedValue(mockGame);
-      vi.mocked(GameRepository.prototype.softDelete).mockResolvedValue(mockGame);
+      vi.mocked(ServerRepository.prototype.findActiveByGameId).mockResolvedValue([]);
+      vi.mocked(GameRepository.prototype.delete).mockResolvedValue(mockGame);
       
       const result = await gameService.deleteGame('1');
       expect(result).toEqual(mockGame);
+    });
+
+    it('should throw if active servers exist when deleting game', async () => {
+      const mockGame = { id: '1', name: 'Game1', slug: 'game1', createdAt: new Date(), updatedAt: new Date() };
+      vi.mocked(GameRepository.prototype.findById).mockResolvedValue(mockGame);
+      vi.mocked(ServerRepository.prototype.findActiveByGameId).mockResolvedValue([{ id: 'server-1' } as any]);
+      
+      await expect(gameService.deleteGame('1')).rejects.toThrow(AppError);
     });
   });
 });

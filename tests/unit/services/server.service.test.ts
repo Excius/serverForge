@@ -29,7 +29,7 @@ describe('ServerService', () => {
     it('should create server successfully', async () => {
       vi.mocked(GameRepository.prototype.findById).mockResolvedValue({} as any);
       vi.mocked(ProviderRepository.prototype.findById).mockResolvedValue({} as any);
-      vi.mocked(ServerRepository.prototype.findByProviderServerId).mockResolvedValue(null);
+      vi.mocked(ServerRepository.prototype.findByProviderServerId).mockResolvedValue(null as any);
       vi.mocked(ServerRepository.prototype.create).mockResolvedValue({ id: 'server-1' } as any);
 
       const result = await serverService.createServer({
@@ -44,7 +44,7 @@ describe('ServerService', () => {
     });
 
     it('should throw if game not found', async () => {
-      vi.mocked(GameRepository.prototype.findById).mockResolvedValue(null);
+      vi.mocked(GameRepository.prototype.findById).mockResolvedValue(null as any);
       await expect(serverService.createServer({} as any)).rejects.toThrow(AppError);
     });
   });
@@ -62,7 +62,7 @@ describe('ServerService', () => {
 
       const result = await serverService.startServer('s-1');
       expect(computeProviderMock.startServer).toHaveBeenCalledWith('ps-1');
-      expect(result.status).toBe('starting');
+      expect(result?.status).toBe('starting');
     });
   });
 
@@ -79,7 +79,7 @@ describe('ServerService', () => {
 
       const result = await serverService.stopServer('s-1');
       expect(computeProviderMock.stopServer).toHaveBeenCalledWith('ps-1');
-      expect(result.status).toBe('stopping');
+      expect(result?.status).toBe('stopping');
     });
   });
 });

@@ -6,6 +6,9 @@
   "triggers": {
     "crons": ["*/5 * * * *"],
   },
+  "vars": {
+    "SESSION_DURATION": 604800,
+  },
   // "compatibility_flags": [
   //   "nodejs_compat"
   // ],

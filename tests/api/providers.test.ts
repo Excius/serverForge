@@ -67,7 +67,7 @@ describe("Providers Routes", () => {
         headers: { Cookie: userCookie },
       });
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(Array.isArray(body)).toBe(true);
       expect(body.length).toBe(1);
     });
@@ -81,7 +81,7 @@ describe("Providers Routes", () => {
         body: JSON.stringify({ name: "Mock", slug: "mock" }),
       });
       expect(res.status).toBe(201);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(body.name).toBe("Mock");
     });
 
@@ -99,7 +99,7 @@ describe("Providers Routes", () => {
     it("should return the provider for valid id", async () => {
       const res = await app.request(`/api/v1/providers/${providerId}`);
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(body.id).toBe(providerId);
     });
     
@@ -122,7 +122,7 @@ describe("Providers Routes", () => {
         body: JSON.stringify({ name: "AWS Pro" }),
       });
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(body.name).toBe("AWS Pro");
     });
 

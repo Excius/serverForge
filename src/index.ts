@@ -1,5 +1,4 @@
 import { Hono } from "hono";
-import { RegExpRouter } from "hono/router/reg-exp-router";
 import health from "./routes/health";
 import routes from "./routes/index";
 import { contextStorage } from "hono/context-storage";
@@ -9,11 +8,18 @@ import { AppError } from "./lib/errors";
 import { Bindings } from "./lib/config";
 import { getDb } from "./db";
 import { ServerReconciliationService } from "./services/server-reconciliation.service";
+import { cors } from "hono/cors";
 
 // Inject schemas into Hono's core Typings
-export const app = new Hono<AppEnv>({
-  router: new RegExpRouter(),
-});
+export const app = new Hono<AppEnv>();
+
+app.use(
+  "/*",
+  cors({
+    origin: ["http://localhost:5173"],
+    credentials: true,
+  }),
+);
 
 // Enable tracking for context storage
 app.use(contextStorage());

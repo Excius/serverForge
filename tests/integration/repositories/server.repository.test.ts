@@ -60,9 +60,9 @@ describe("ServerRepository", () => {
       expect(found?.name).toBe("Test Server");
     });
 
-    it("should return null if server is soft deleted", async () => {
+    it("should return null if server is hard deleted", async () => {
       const created = await createTestServer();
-      await serverRepo.softDelete(created.id);
+      await serverRepo.delete(created.id);
       const found = await serverRepo.findById(created.id);
       expect(found).toBeNull();
     });
@@ -78,7 +78,7 @@ describe("ServerRepository", () => {
   });
 
   describe("findAll & findServersForReconciliation", () => {
-    it("should return all non-deleted servers", async () => {
+    it("should return all active servers", async () => {
       const s1 = await createTestServer();
       const s2 = await serverRepo.create({
         name: "Test Server 2",
@@ -88,7 +88,7 @@ describe("ServerRepository", () => {
         gameId: testGameId,
         status: "unknown",
       });
-      await serverRepo.softDelete(s2.id);
+      await serverRepo.delete(s2.id);
 
       const all = await serverRepo.findAll();
       expect(all).toHaveLength(1);

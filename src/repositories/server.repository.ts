@@ -1,26 +1,80 @@
-import { and, eq, isNull } from "drizzle-orm";
-
+import { and, eq } from "drizzle-orm";
 import type { Database } from "../db";
-import { serverTable } from "../db/schema";
+import {
+  gameTable,
+  providerTable,
+  serverAccessTable,
+  serverTable,
+} from "../db/schema";
 
 export class ServerRepository {
   constructor(private readonly db: Database) {}
 
   async findAll() {
-    return this.db
-      .select()
+    const rows = await this.db
+      .select({
+        server: serverTable,
+        gameSlug: gameTable.slug,
+        providerSlug: providerTable.slug,
+      })
       .from(serverTable)
-      .where(isNull(serverTable.deletedAt));
+      .leftJoin(gameTable, eq(serverTable.gameId, gameTable.id))
+      .leftJoin(providerTable, eq(serverTable.providerId, providerTable.id));
+
+    return rows.map((r) => ({
+      ...r.server,
+      gameSlug: r.gameSlug ?? undefined,
+      providerSlug: r.providerSlug ?? undefined,
+      currentPlayers: r.server.playerCount,
+    }));
+  }
+
+  async findForUser(userId: string) {
+    const rows = await this.db
+      .select({
+        server: serverTable,
+        gameSlug: gameTable.slug,
+        providerSlug: providerTable.slug,
+      })
+      .from(serverTable)
+      .innerJoin(
+        serverAccessTable,
+        eq(serverTable.id, serverAccessTable.serverId),
+      )
+      .leftJoin(gameTable, eq(serverTable.gameId, gameTable.id))
+      .leftJoin(providerTable, eq(serverTable.providerId, providerTable.id))
+      .where(eq(serverAccessTable.userId, userId));
+
+    return rows.map((r) => ({
+      ...r.server,
+      gameSlug: r.gameSlug ?? undefined,
+      providerSlug: r.providerSlug ?? undefined,
+      currentPlayers: r.server.playerCount,
+    }));
   }
 
   async findById(id: string) {
-    const result = await this.db
-      .select()
+    const rows = await this.db
+      .select({
+        server: serverTable,
+        gameSlug: gameTable.slug,
+        providerSlug: providerTable.slug,
+      })
       .from(serverTable)
-      .where(and(eq(serverTable.id, id), isNull(serverTable.deletedAt)))
+      .leftJoin(gameTable, eq(serverTable.gameId, gameTable.id))
+      .leftJoin(providerTable, eq(serverTable.providerId, providerTable.id))
+      .where(eq(serverTable.id, id))
       .limit(1);
 
-    return result[0] ?? null;
+    const r = rows[0];
+    if (!r) return null;
+
+    return {
+      ...r.server,
+      gameSlug: r.gameSlug ?? undefined,
+      providerSlug: r.providerSlug ?? undefined,
+      currentPlayers: r.server.playerCount,
+    };
   }
 
   async findByProviderServerId(providerId: string, providerServerId: string) {
@@ -31,7 +85,6 @@ export class ServerRepository {
         and(
           eq(serverTable.providerId, providerId),
           eq(serverTable.providerServerId, providerServerId),
-          isNull(serverTable.deletedAt),
         ),
       )
       .limit(1);
@@ -73,24 +126,37 @@ export class ServerRepository {
     return result[0] ?? null;
   }
 
-  async softDelete(id: string) {
+  async delete(id: string) {
+    await this.db
+      .delete(serverAccessTable)
+      .where(eq(serverAccessTable.serverId, id));
+
     const result = await this.db
-      .update(serverTable)
-      .set({
-        deletedAt: new Date(),
-        updatedAt: new Date(),
-      })
+      .delete(serverTable)
       .where(eq(serverTable.id, id))
       .returning();
 
     return result[0] ?? null;
   }
 
-  async findServersForReconciliation() {
+  async findActiveByGameId(gameId: string) {
     return this.db
       .select()
       .from(serverTable)
-      .where(isNull(serverTable.deletedAt));
+      .where(eq(serverTable.gameId, gameId))
+      .limit(1);
+  }
+
+  async findActiveByProviderId(providerId: string) {
+    return this.db
+      .select()
+      .from(serverTable)
+      .where(eq(serverTable.providerId, providerId))
+      .limit(1);
+  }
+
+  async findServersForReconciliation() {
+    return this.db.select().from(serverTable);
   }
 
   async updateHealth(
