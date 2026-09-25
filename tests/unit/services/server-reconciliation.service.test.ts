@@ -3,28 +3,29 @@ import { ServerReconciliationService } from '../../../src/services/server-reconc
 import { ServerRepository } from '../../../src/repositories/server.repository';
 import { ProviderRepository } from '../../../src/repositories/provider.repository';
 import { GameRepository } from '../../../src/repositories/game.repository';
-import { resolveProvider } from '../../../src/providers/provider.resolver';
-import { resolveGame } from '../../../src/games/game.resolver';
+import { resolveProvider } from '../../../src/providers/provider.registry';
+import { GameRegistry } from '../../../src/games/game.registry';
 import { Database } from '../../../src/db';
 import { Bindings } from '../../../src/lib/config';
 
 vi.mock('../../../src/repositories/server.repository');
 vi.mock('../../../src/repositories/provider.repository');
 vi.mock('../../../src/repositories/game.repository');
-vi.mock('../../../src/providers/provider.resolver');
-vi.mock('../../../src/games/game.resolver');
+vi.mock('../../../src/providers/provider.registry');
 
 describe('ServerReconciliationService', () => {
   let service: ServerReconciliationService;
   let db: Database;
   let env: Bindings;
+  let gameRegistry: GameRegistry;
   
   beforeEach(() => {
     vi.clearAllMocks();
     vi.useFakeTimers();
     db = {} as Database;
     env = {} as Bindings;
-    service = new ServerReconciliationService(db, env);
+    gameRegistry = new GameRegistry();
+    service = new ServerReconciliationService(db, env, gameRegistry);
   });
 
   afterEach(() => {
@@ -41,7 +42,7 @@ describe('ServerReconciliationService', () => {
     vi.mocked(resolveProvider).mockReturnValue(mockProvider as any);
     vi.mocked(GameRepository.prototype.findById).mockResolvedValue({ slug: 'g-slug' } as any);
     const mockGame = { getServerInfo: vi.fn().mockResolvedValue({ playerCount: 0, heartbeatAt: new Date() }) };
-    vi.mocked(resolveGame).mockReturnValue(mockGame as any);
+    gameRegistry.registerAdapter('g-slug', mockGame as any);
     vi.mocked(ServerRepository.prototype.claimForStopping).mockResolvedValue(true as any);
 
     await service.reconcile();
@@ -61,7 +62,7 @@ describe('ServerReconciliationService', () => {
     
     vi.mocked(GameRepository.prototype.findById).mockResolvedValue({ slug: 'g-slug' } as any);
     const mockGame = { getServerInfo: vi.fn().mockResolvedValue({ playerCount: 0, heartbeatAt: new Date() }) };
-    vi.mocked(resolveGame).mockReturnValue(mockGame as any);
+    gameRegistry.registerAdapter('g-slug', mockGame as any);
     vi.mocked(ServerRepository.prototype.claimForStopping).mockResolvedValue(true as any);
 
     await service.reconcile();
@@ -82,7 +83,7 @@ describe('ServerReconciliationService', () => {
     
     vi.mocked(GameRepository.prototype.findById).mockResolvedValue({ slug: 'g-slug' } as any);
     const mockGame = { getServerInfo: vi.fn().mockResolvedValue({ playerCount: 0, heartbeatAt: new Date() }) };
-    vi.mocked(resolveGame).mockReturnValue(mockGame as any);
+    gameRegistry.registerAdapter('g-slug', mockGame as any);
 
     await service.reconcile();
 
@@ -101,7 +102,7 @@ describe('ServerReconciliationService', () => {
     
     vi.mocked(GameRepository.prototype.findById).mockResolvedValue({ slug: 'g-slug' } as any);
     const mockGame = { getServerInfo: vi.fn().mockResolvedValue({ playerCount: 1, heartbeatAt: new Date() }) }; // 1 player
-    vi.mocked(resolveGame).mockReturnValue(mockGame as any);
+    gameRegistry.registerAdapter('g-slug', mockGame as any);
 
     await service.reconcile();
 
@@ -128,7 +129,7 @@ describe('ServerReconciliationService', () => {
     vi.mocked(resolveProvider).mockReturnValue(mockProvider as any);
     vi.mocked(GameRepository.prototype.findById).mockResolvedValue({ slug: 'g-slug' } as any);
     const mockGame = { getServerInfo: vi.fn().mockRejectedValue(new Error('Heartbeat failed')) };
-    vi.mocked(resolveGame).mockReturnValue(mockGame as any);
+    gameRegistry.registerAdapter('g-slug', mockGame as any);
 
     await service.reconcile();
 

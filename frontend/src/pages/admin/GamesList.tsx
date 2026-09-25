@@ -6,7 +6,8 @@ import { Input } from '@/components/ui/Input';
 import { Badge } from '@/components/ui/Badge';
 import { Modal } from '@/components/ui/Modal';
 import { ConfirmModal } from '@/components/ui/ConfirmModal';
-import { Gamepad2, Plus, Search, Trash2, ShieldAlert } from 'lucide-react';
+import { AdapterConfigModal } from '@/components/admin/AdapterConfigModal';
+import { Gamepad2, Plus, Search, Trash2, ShieldAlert, Settings } from 'lucide-react';
 
 export default function GamesList() {
   const [games, setGames] = useState<any[]>([]);
@@ -18,6 +19,8 @@ export default function GamesList() {
   const [slug, setSlug] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const [configTarget, setConfigTarget] = useState<{ id: string; name: string } | null>(null);
 
   const fetchGamesData = async () => {
     setLoading(true);
@@ -153,7 +156,16 @@ export default function GamesList() {
                     </Badge>
                   </TableCell>
                   <TableCell className="font-mono text-xs text-zinc-500">{game.id}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right space-x-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setConfigTarget({ id: game.id, name: game.name })}
+                      className="text-zinc-400 hover:text-indigo-400 hover:bg-indigo-500/10"
+                      icon={<Settings className="w-4 h-4" />}
+                    >
+                      Configure
+                    </Button>
                     <Button
                       variant="ghost"
                       size="sm"
@@ -229,6 +241,18 @@ export default function GamesList() {
         </form>
       </Modal>
 
+      {/* Dynamic Adapter Configuration Modal */}
+      {configTarget && (
+        <AdapterConfigModal
+          isOpen={!!configTarget}
+          onClose={() => setConfigTarget(null)}
+          entityType="game"
+          entityId={configTarget.id}
+          entityName={configTarget.name}
+          apiService={gamesApi}
+        />
+      )}
+
       <ConfirmModal
         isOpen={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
@@ -240,3 +264,4 @@ export default function GamesList() {
     </div>
   );
 }
+

@@ -2,16 +2,15 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { clearDatabase, testDb } from "../setup/db";
 import { userTable, gameTable, providerTable, serverTable } from "../../src/db/schema";
 import { ServerReconciliationService } from "../../src/services/server-reconciliation.service";
-import { resolveProvider } from "../../src/providers/provider.resolver";
-import { resolveGame } from "../../src/games/game.resolver";
+import { resolveProvider } from "../../src/providers/provider.registry";
+import { GameRegistry } from "../../src/games/game.registry";
 import { eq } from "drizzle-orm";
 
 vi.mock("../../src/lib/config", () => ({
   env: {},
 }));
 
-vi.mock("../../src/providers/provider.resolver");
-vi.mock("../../src/games/game.resolver");
+vi.mock("../../src/providers/provider.registry");
 
 describe("E2E Control Plane Lifecycle", () => {
   let adminId = "";
@@ -21,6 +20,7 @@ describe("E2E Control Plane Lifecycle", () => {
   
   let mockProvider: any;
   let mockGameAdapter: any;
+  let gameRegistry: GameRegistry;
 
   beforeEach(async () => {
     await clearDatabase();
@@ -73,12 +73,14 @@ describe("E2E Control Plane Lifecycle", () => {
       }),
     };
 
+    gameRegistry = new GameRegistry();
+    gameRegistry.registerAdapter("mock-game-e2e", mockGameAdapter);
+
     vi.mocked(resolveProvider).mockReturnValue(mockProvider);
-    vi.mocked(resolveGame).mockReturnValue(mockGameAdapter);
   });
 
   it("should complete the full reconciliation lifecycle correctly", async () => {
-    const service = new ServerReconciliationService(testDb, {} as any);
+    const service = new ServerReconciliationService(testDb, {} as any, gameRegistry);
 
     // 4. Mock provider reports running
     mockProvider.getServerStatus.mockResolvedValue("running");

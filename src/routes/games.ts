@@ -9,7 +9,9 @@ import {
 } from "../schemas/game.schema";
 import { adminMiddleware } from "../middleware/admin";
 import { authMiddleware } from "../middleware/auth";
-import { getSupportedGames, isGameSupported } from "../games/game.resolver";
+import { ConfigurationService } from "../services/configuration.service";
+import { env } from "../lib/config";
+import { getSupportedGames, isGameSupported } from "../games/game.registry";
 
 const games = new Hono<AppEnv>();
 
@@ -26,9 +28,9 @@ games.get("/", async (c) => {
 
   const service = new GameService(db);
 
-  const games = await service.getGames();
+  const gamesList = await service.getGames();
 
-  return c.json(games, 200);
+  return c.json(gamesList, 200);
 });
 
 games.post("/", adminMiddleware, async (c) => {
@@ -47,7 +49,9 @@ games.post("/", adminMiddleware, async (c) => {
   }
 
   if (!isGameSupported(result.data.slug)) {
-    const supportedSlugs = getSupportedGames().map((g) => g.slug).join(", ");
+    const supportedSlugs = getSupportedGames()
+      .map((g) => g.slug)
+      .join(", ");
     return c.json(
       {
         error: `Unsupported game engine slug '${result.data.slug}'. Backend currently supports: [${supportedSlugs}]`,
@@ -90,7 +94,7 @@ games.get("/:id", async (c) => {
 
   const service = new GameService(db);
 
-  const game = await service.getGameById(id);
+  const game = await service.getGameById(result.data);
 
   if (!game) {
     return c.json(
@@ -125,7 +129,7 @@ games.patch("/:id", adminMiddleware, async (c) => {
   if (!bodyResult.success) {
     return c.json(
       {
-        error: "Invaid request",
+        error: "Invalid request",
         details: bodyResult.error.flatten(),
       },
       400,
@@ -182,6 +186,63 @@ games.delete("/:id", adminMiddleware, async (c) => {
   return c.json({
     message: "Game deleted successfully",
   });
+});
+
+games.get("/:id/config", adminMiddleware, async (c) => {
+  const id = c.req.param("id");
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return c.json({ error: "Invalid game ID" }, 400);
+  }
+
+  const db = c.get("db");
+  const gameService = new GameService(db);
+  const game = await gameService.getGameById(idResult.data);
+  if (!game) {
+    return c.json({ error: "Game not found" }, 404);
+  }
+
+  const configService = new ConfigurationService(db, env.CONFIG_ENCRYPTION_KEY);
+  const config = await configService.getConfig("game", game.id, game.slug);
+  return c.json(config, 200);
+});
+
+games.put("/:id/config", adminMiddleware, async (c) => {
+  const id = c.req.param("id");
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return c.json({ error: "Invalid game ID" }, 400);
+  }
+
+  const db = c.get("db");
+  const gameService = new GameService(db);
+  const game = await gameService.getGameById(idResult.data);
+  if (!game) {
+    return c.json({ error: "Game not found" }, 404);
+  }
+
+  const body = await c.req.json();
+  const configService = new ConfigurationService(db, env.CONFIG_ENCRYPTION_KEY);
+  const updatedConfig = await configService.saveConfig(
+    "game",
+    game.id,
+    game.slug,
+    body?.values,
+  );
+  return c.json(updatedConfig, 200);
+});
+
+games.delete("/:id/config", adminMiddleware, async (c) => {
+  const id = c.req.param("id");
+  const idResult = uuidSchema.safeParse(id);
+  if (!idResult.success) {
+    return c.json({ error: "Invalid game ID" }, 400);
+  }
+
+  const db = c.get("db");
+  const configService = new ConfigurationService(db, env.CONFIG_ENCRYPTION_KEY);
+  await configService.deleteConfig("game", idResult.data);
+  return c.json({ message: "Game configuration deleted successfully" }, 200);
 });
 
 export default games;

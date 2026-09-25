@@ -1,5 +1,3 @@
-import type { ProviderServerStatus } from "../providers/provider";
-
 export interface GameServerContext {
   serverId: string;
   providerServerId: string;

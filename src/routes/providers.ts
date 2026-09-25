@@ -8,7 +8,12 @@ import {
 import { ProviderService } from "../services/provider.service";
 import { authMiddleware } from "../middleware/auth";
 import { adminMiddleware } from "../middleware/admin";
-import { getSupportedProviders, isProviderSupported } from "../providers/provider.resolver";
+import {
+  getSupportedProviders,
+  isProviderSupported,
+} from "../providers/provider.registry";
+import { ConfigurationService } from "../services/configuration.service";
+import { env } from "../lib/config";
 
 const providers = new Hono<AppEnv>();
 
@@ -74,7 +79,9 @@ providers.post("/", authMiddleware, adminMiddleware, async (c) => {
   }
 
   if (!isProviderSupported(result.data.slug)) {
-    const supportedSlugs = getSupportedProviders().map((p) => p.slug).join(", ");
+    const supportedSlugs = getSupportedProviders()
+      .map((p) => p.slug)
+      .join(", ");
     return c.json(
       {
         error: `Unsupported provider slug '${result.data.slug}'. Backend currently supports: [${supportedSlugs}]`,
@@ -173,6 +180,70 @@ providers.delete("/:id", authMiddleware, adminMiddleware, async (c) => {
   return c.json({
     message: "Provider deleted successfully",
   });
+});
+
+providers.get("/:id/config", authMiddleware, adminMiddleware, async (c) => {
+  const id = c.req.param("id");
+  const idResult = providerIdSchema.safeParse(id);
+  if (!idResult.success) {
+    return c.json({ error: "Invalid provider ID" }, 400);
+  }
+
+  const db = c.get("db");
+  const providerService = new ProviderService(db);
+  const provider = await providerService.getProviderById(idResult.data);
+  if (!provider) {
+    return c.json({ error: "Provider not found" }, 404);
+  }
+
+  const configService = new ConfigurationService(db, env.CONFIG_ENCRYPTION_KEY);
+  const config = await configService.getConfig(
+    "provider",
+    provider.id,
+    provider.slug,
+  );
+  return c.json(config, 200);
+});
+
+providers.put("/:id/config", authMiddleware, adminMiddleware, async (c) => {
+  const id = c.req.param("id");
+  const idResult = providerIdSchema.safeParse(id);
+  if (!idResult.success) {
+    return c.json({ error: "Invalid provider ID" }, 400);
+  }
+
+  const db = c.get("db");
+  const providerService = new ProviderService(db);
+  const provider = await providerService.getProviderById(idResult.data);
+  if (!provider) {
+    return c.json({ error: "Provider not found" }, 404);
+  }
+
+  const body = await c.req.json();
+  const configService = new ConfigurationService(db, env.CONFIG_ENCRYPTION_KEY);
+  const updatedConfig = await configService.saveConfig(
+    "provider",
+    provider.id,
+    provider.slug,
+    body?.values,
+  );
+  return c.json(updatedConfig, 200);
+});
+
+providers.delete("/:id/config", authMiddleware, adminMiddleware, async (c) => {
+  const id = c.req.param("id");
+  const idResult = providerIdSchema.safeParse(id);
+  if (!idResult.success) {
+    return c.json({ error: "Invalid provider ID" }, 400);
+  }
+
+  const db = c.get("db");
+  const configService = new ConfigurationService(db, env.CONFIG_ENCRYPTION_KEY);
+  await configService.deleteConfig("provider", idResult.data);
+  return c.json(
+    { message: "Provider configuration deleted successfully" },
+    200,
+  );
 });
 
 export default providers;

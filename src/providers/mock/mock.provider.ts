@@ -1,4 +1,4 @@
-import type { ComputeProvider, ProviderServerStatus } from "./provider";
+import { ComputeProvider, ProviderServerStatus } from "../provider";
 
 type MockServer = {
   id: string;
