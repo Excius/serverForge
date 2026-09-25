@@ -28,9 +28,9 @@ describe('AuthService', () => {
 
   describe('createUser', () => {
     it('should create a user successfully', async () => {
-      vi.mocked(UserRepository.prototype.findByEmail).mockResolvedValue(null);
+      vi.mocked(UserRepository.prototype.findByEmail).mockResolvedValue(null as any);
       vi.mocked(hashPassword).mockResolvedValue('hashedPassword');
-      const mockUser = { id: 'user-1', email: 'test@example.com', passwordHash: 'hashedPassword', createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+      const mockUser = { id: 'user-1', email: 'test@example.com', passwordHash: 'hashedPassword', role: 'user' as const, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
       vi.mocked(UserRepository.prototype.create).mockResolvedValue(mockUser);
 
       const result = await authService.createUser('test@example.com', 'password123');
@@ -42,7 +42,7 @@ describe('AuthService', () => {
     });
 
     it('should throw AppError if user already exists', async () => {
-      const mockUser = { id: 'user-1', email: 'test@example.com', passwordHash: 'hashedPassword', createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+      const mockUser = { id: 'user-1', email: 'test@example.com', passwordHash: 'hashedPassword', role: 'user' as const, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
       vi.mocked(UserRepository.prototype.findByEmail).mockResolvedValue(mockUser);
 
       await expect(authService.createUser('test@example.com', 'password123')).rejects.toThrow(AppError);
@@ -51,7 +51,7 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should login successfully and return session', async () => {
-      const mockUser = { id: 'user-1', email: 'test@example.com', passwordHash: 'hashedPassword', createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+      const mockUser = { id: 'user-1', email: 'test@example.com', passwordHash: 'hashedPassword', role: 'user' as const, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
       vi.mocked(UserRepository.prototype.findByEmail).mockResolvedValue(mockUser);
       vi.mocked(verifyPassword).mockResolvedValue(true);
       vi.mocked(generateSessionToken).mockReturnValue('token');
@@ -69,12 +69,12 @@ describe('AuthService', () => {
     });
 
     it('should throw AppError if user not found', async () => {
-      vi.mocked(UserRepository.prototype.findByEmail).mockResolvedValue(null);
+      vi.mocked(UserRepository.prototype.findByEmail).mockResolvedValue(null as any);
       await expect(authService.login('test@example.com', 'password123')).rejects.toThrow(AppError);
     });
 
     it('should throw AppError if password invalid', async () => {
-      const mockUser = { id: 'user-1', email: 'test@example.com', passwordHash: 'hashedPassword', createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
+      const mockUser = { id: 'user-1', email: 'test@example.com', passwordHash: 'hashedPassword', role: 'user' as const, createdAt: new Date(), updatedAt: new Date(), deletedAt: null };
       vi.mocked(UserRepository.prototype.findByEmail).mockResolvedValue(mockUser);
       vi.mocked(verifyPassword).mockResolvedValue(false);
       await expect(authService.login('test@example.com', 'password123')).rejects.toThrow(AppError);
@@ -84,7 +84,7 @@ describe('AuthService', () => {
   describe('logout', () => {
     it('should logout successfully', async () => {
       vi.mocked(hashSessionToken).mockResolvedValue('tokenHash');
-      const mockSession = { id: 'session-1', userId: 'user-1', tokenHash: 'tokenHash', expiresAt: new Date(), createdAt: new Date() };
+      const mockSession = { id: 'session-1', userId: 'user-1', tokenHash: 'tokenHash', expiresAt: new Date(), createdAt: new Date(), revokedAt: null };
       vi.mocked(SessionRepository.prototype.findByTokenHash).mockResolvedValue(mockSession);
       
       await authService.logout('token');
@@ -94,7 +94,7 @@ describe('AuthService', () => {
 
     it('should do nothing if session not found', async () => {
       vi.mocked(hashSessionToken).mockResolvedValue('tokenHash');
-      vi.mocked(SessionRepository.prototype.findByTokenHash).mockResolvedValue(null);
+      vi.mocked(SessionRepository.prototype.findByTokenHash).mockResolvedValue(null as any);
       
       await authService.logout('token');
       

@@ -21,4 +21,4 @@ export const updateProviderSchema = z.object({
     .optional(),
 });
 
-export const providerIdSchema = z.uuid();
+export const providerIdSchema = z.string().uuid();

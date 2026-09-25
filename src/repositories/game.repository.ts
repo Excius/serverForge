@@ -1,4 +1,4 @@
-import { and, eq, isNull } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { Database } from "../db";
 import { gameTable } from "../db/schema";
 
@@ -9,7 +9,7 @@ export class GameRepository {
     const result = await this.db
       .select()
       .from(gameTable)
-      .where(and(eq(gameTable.id, id), isNull(gameTable.deletedAt)))
+      .where(eq(gameTable.id, id))
       .limit(1);
 
     return result[0] ?? null;
@@ -19,12 +19,12 @@ export class GameRepository {
     return this.db
       .select()
       .from(gameTable)
-      .where(and(eq(gameTable.slug, slug), isNull(gameTable.deletedAt)))
+      .where(eq(gameTable.slug, slug))
       .limit(1);
   }
 
   async findAll() {
-    return this.db.select().from(gameTable).where(isNull(gameTable.deletedAt));
+    return this.db.select().from(gameTable);
   }
 
   async create(name: string, slug: string) {
@@ -55,10 +55,9 @@ export class GameRepository {
     return result[0] ?? null;
   }
 
-  async softDelete(id: string) {
+  async delete(id: string) {
     const result = await this.db
-      .update(gameTable)
-      .set({ deletedAt: new Date(), updatedAt: new Date() })
+      .delete(gameTable)
       .where(eq(gameTable.id, id))
       .returning();
 

@@ -27,7 +27,6 @@ export const userTable = pgTable("users", {
   role: userRoleEnum().notNull().default("user"),
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp(),
-  deletedAt: timestamp(),
 });
 
 export const gameTable = pgTable("games", {
@@ -36,7 +35,6 @@ export const gameTable = pgTable("games", {
   slug: text().notNull().unique(),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp(),
-  deletedAt: timestamp(),
 });
 
 export const providerTable = pgTable("providers", {
@@ -45,7 +43,6 @@ export const providerTable = pgTable("providers", {
   slug: text().notNull().unique(),
   createdAt: timestamp().notNull().defaultNow(),
   updatedAt: timestamp(),
-  deletedAt: timestamp(),
 });
 
 export const serverTable = pgTable("servers", {
@@ -69,7 +66,6 @@ export const serverTable = pgTable("servers", {
   lastStoppedAt: timestamp(),
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp(),
-  deletedAt: timestamp(),
 });
 
 export const serverAccessTable = pgTable(

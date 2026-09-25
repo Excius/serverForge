@@ -94,7 +94,7 @@ describe("Servers Routes", () => {
         headers: { Cookie: adminCookie },
       });
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(Array.isArray(body)).toBe(true);
       expect(body.length).toBe(1);
     });
@@ -104,7 +104,7 @@ describe("Servers Routes", () => {
         headers: { Cookie: userCookie },
       });
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(Array.isArray(body)).toBe(true);
       expect(body.length).toBe(0);
     });
@@ -123,7 +123,7 @@ describe("Servers Routes", () => {
         }),
       });
       expect(res.status).toBe(201);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(body.name).toBe("New Server");
     });
 
@@ -148,7 +148,7 @@ describe("Servers Routes", () => {
         headers: { Cookie: adminCookie },
       });
       expect(res.status).toBe(200);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(body.id).toBe(serverId);
     });
 

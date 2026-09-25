@@ -5,22 +5,29 @@ import { GameRepository } from "../repositories/game.repository";
 import { ProviderRepository } from "../repositories/provider.repository";
 import { resolveProvider } from "../providers/provider.resolver";
 import { Bindings } from "../lib/config";
+import { ServerAccessService } from "./server-access.service";
 
 export class ServerService {
   private readonly serverRepository: ServerRepository;
   private readonly gameRepository: GameRepository;
   private readonly providerRepository: ProviderRepository;
+  private readonly db: Database;
   private readonly env: Bindings;
 
   constructor(db: Database, env: Bindings) {
     this.serverRepository = new ServerRepository(db);
     this.gameRepository = new GameRepository(db);
     this.providerRepository = new ProviderRepository(db);
+    this.db = db;
     this.env = env;
   }
 
   async getServers() {
     return this.serverRepository.findAll();
+  }
+
+  async getServersForUser(userId: string) {
+    return this.serverRepository.findForUser(userId);
   }
 
   async getServerById(id: string) {
@@ -55,10 +62,19 @@ export class ServerService {
       throw new AppError("This provider server is already registered", 409);
     }
 
-    return this.serverRepository.create({
+    const server = await this.serverRepository.create({
       ...data,
       status: "unknown",
     });
+
+    try {
+      const accessService = new ServerAccessService(this.db);
+      await accessService.grantAccess(server.id, data.createdBy);
+    } catch {
+      // Ignore if access rule already exists
+    }
+
+    return server;
   }
 
   async updateServer(
@@ -83,7 +99,7 @@ export class ServerService {
       return null;
     }
 
-    return this.serverRepository.softDelete(id);
+    return this.serverRepository.delete(id);
   }
 
   async startServer(id: string) {

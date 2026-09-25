@@ -31,7 +31,7 @@ describe("Auth Routes", () => {
       });
       
       expect(res.status).toBe(201);
-      const body = await res.json();
+      const body = (await res.json()) as any;
       expect(body.email).toBe("test@example.com");
       expect(body.role).toBe("user");
       expect(body).not.toHaveProperty("password");

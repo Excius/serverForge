@@ -113,7 +113,7 @@ describe('ServerReconciliationService', () => {
   it('should set server to error if provider fails', async () => {
     const server = { id: '1', providerId: 'p1', providerServerId: 'ps1', status: 'running', gameId: 'g1' };
     vi.mocked(ServerRepository.prototype.findServersForReconciliation).mockResolvedValue([server] as any);
-    vi.mocked(ProviderRepository.prototype.findById).mockResolvedValue(null);
+    vi.mocked(ProviderRepository.prototype.findById).mockResolvedValue(null as any);
 
     await service.reconcile();
 

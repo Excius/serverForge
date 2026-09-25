@@ -25,4 +25,4 @@ export const updateGameSchema = z.object({
     .optional(),
 });
 
-export const gameIdSchema = z.uuid();
+export const gameIdSchema = z.string().uuid();
