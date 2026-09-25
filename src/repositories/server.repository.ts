@@ -1,7 +1,6 @@
 import { and, eq, isNull } from "drizzle-orm";
-
 import type { Database } from "../db";
-import { serverTable } from "../db/schema";
+import { serverAccessTable, serverTable } from "../db/schema";
 
 export class ServerRepository {
   constructor(private readonly db: Database) {}
@@ -11,6 +10,22 @@ export class ServerRepository {
       .select()
       .from(serverTable)
       .where(isNull(serverTable.deletedAt));
+  }
+
+  async findForUser(userId: string) {
+    return this.db
+      .select()
+      .from(serverTable)
+      .innerJoin(
+        serverAccessTable,
+        eq(serverTable.id, serverAccessTable.serverId),
+      )
+      .where(
+        and(
+          eq(serverAccessTable.userId, userId),
+          isNull(serverTable.deletedAt),
+        ),
+      );
   }
 
   async findById(id: string) {

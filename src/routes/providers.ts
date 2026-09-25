@@ -11,7 +11,7 @@ import { adminMiddleware } from "../middleware/admin";
 
 const providers = new Hono<AppEnv>();
 
-providers.get("/", async (c) => {
+providers.get("/", authMiddleware, async (c) => {
   const db = c.get("db");
 
   const service = new ProviderService(db);

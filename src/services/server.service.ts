@@ -23,6 +23,10 @@ export class ServerService {
     return this.serverRepository.findAll();
   }
 
+  async getServersForUser(userId: string) {
+    return this.serverRepository.findForUser(userId);
+  }
+
   async getServerById(id: string) {
     return this.serverRepository.findById(id);
   }

@@ -1,31 +1,33 @@
 import { Hono } from "hono";
 import type { AppEnv } from "../types/hono";
-
 import {
   createServerSchema,
   updateServerSchema,
   serverIdSchema,
 } from "../schemas/server.schema";
-
 import { ServerService } from "../services/server.service";
-
 import { authMiddleware } from "../middleware/auth";
 import { adminMiddleware } from "../middleware/admin";
 import { env } from "../lib/config";
+import { ServerAccessService } from "../services/server-access.service";
 
 const servers = new Hono<AppEnv>();
 
-servers.get("/", authMiddleware, adminMiddleware, async (c) => {
+servers.get("/", authMiddleware, async (c) => {
   const db = c.get("db");
+  const user = c.get("user");
 
   const service = new ServerService(db, env);
 
-  const servers = await service.getServers();
+  const servers =
+    user.role === "admin"
+      ? await service.getServers()
+      : await service.getServersForUser(user.id);
 
   return c.json(servers);
 });
 
-servers.get("/:id", authMiddleware, adminMiddleware, async (c) => {
+servers.get("/:id", authMiddleware, async (c) => {
   const id = c.req.param("id");
 
   const idResult = serverIdSchema.safeParse(id);
@@ -40,6 +42,14 @@ servers.get("/:id", authMiddleware, adminMiddleware, async (c) => {
   }
 
   const db = c.get("db");
+  const user = c.get("user");
+
+  if (user.role !== "admin") {
+    const accessService = new ServerAccessService(db);
+    if (!(await accessService.hasAccess(idResult.data, user.id))) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+  }
 
   const service = new ServerService(db, env);
 
@@ -169,7 +179,7 @@ servers.delete("/:id", authMiddleware, adminMiddleware, async (c) => {
   });
 });
 
-servers.post("/:id/start", authMiddleware, adminMiddleware, async (c) => {
+servers.post("/:id/start", authMiddleware, async (c) => {
   const id = c.req.param("id");
 
   const idResult = serverIdSchema.safeParse(id);
@@ -184,6 +194,14 @@ servers.post("/:id/start", authMiddleware, adminMiddleware, async (c) => {
   }
 
   const db = c.get("db");
+  const user = c.get("user");
+
+  if (user.role !== "admin") {
+    const accessService = new ServerAccessService(db);
+    if (!(await accessService.hasAccess(idResult.data, user.id))) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+  }
 
   const service = new ServerService(db, env);
 
@@ -248,6 +266,14 @@ servers.get("/:id/status", authMiddleware, async (c) => {
   }
 
   const db = c.get("db");
+  const user = c.get("user");
+
+  if (user.role !== "admin") {
+    const accessService = new ServerAccessService(db);
+    if (!(await accessService.hasAccess(idResult.data, user.id))) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+  }
 
   const service = new ServerService(db, env);
 
@@ -283,6 +309,14 @@ servers.get("/:id/ip", authMiddleware, async (c) => {
   }
 
   const db = c.get("db");
+  const user = c.get("user");
+
+  if (user.role !== "admin") {
+    const accessService = new ServerAccessService(db);
+    if (!(await accessService.hasAccess(idResult.data, user.id))) {
+      return c.json({ error: "Forbidden" }, 403);
+    }
+  }
 
   const service = new ServerService(db, c.env);
 

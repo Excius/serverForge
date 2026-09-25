@@ -9,7 +9,6 @@ import {
 } from "../schemas/game.schema";
 import { adminMiddleware } from "../middleware/admin";
 import { authMiddleware } from "../middleware/auth";
-import { serviceRole } from "drizzle-orm/supabase";
 
 const games = new Hono<AppEnv>();
 
@@ -24,7 +23,7 @@ games.get("/", async (c) => {
 
   const games = await service.getGames();
 
-  return c.json(games, 201);
+  return c.json(games, 200);
 });
 
 games.post("/", adminMiddleware, async (c) => {
